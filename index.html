@@ -44,9 +44,11 @@
           this.innerHTML =
             `<svg viewBox="-1.1 -1.1 2.2 2.2" shape-rendering="geometricPrecision">
                 <circle cx="0" cy="0" r="0.9" fill="white" stroke="black" stroke-width="0.1"/>
-                <path d="" fill="#0275ff" ></path>
+                <circle cx="0" cy="0" r="0.7" fill="white" class="inner-circle" />
+                <path d="" fill="#0275d8"></path>
             </svg>` + this.innerHTML;
           this._circle = this.querySelector("circle");
+          this._innerCircle = this.querySelector(".inner-circle");
           this._path = this.querySelector("path");
           this.addEventListener("click", () => {
             this.toggleAttribute("selected");
@@ -77,11 +79,15 @@
 
             this._path.setAttribute("d", pathData);
             this._path.setAttribute("fill", fillColor);
+            this._innerCircle.setAttribute("fill", "#dbdbdb");
             this._circle.setAttribute("stroke", fillColor);
+            this._circle.setAttribute("stroke-width", 0.2);
           } else {
             // If not selected, clear the path data
             this._path.setAttribute("d", "");
             this._circle.setAttribute("stroke", "black");
+            this._innerCircle.setAttribute("fill", "white");
+            this._circle.setAttribute("stroke-width", 0.1);
           }
         }
 
