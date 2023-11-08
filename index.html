@@ -1,0 +1,124 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Custom Slice Selector with Pie Chart Fill</title>
+    <style>
+      slice-selector {
+        display: inline-block;
+        margin-right: 10px;
+        cursor: pointer;
+        position: relative;
+        padding-left: 20px; /* Increased to accommodate the SVG */
+        margin-bottom: 5px;
+        line-height: 20px;
+      }
+
+      slice-selector svg {
+        position: absolute;
+        left: 0;
+        top: 50%;
+        transform: translateY(-50%) rotate(-0.25turn);
+        width: 15px;
+        height: 15px;
+      }
+    </style>
+  </head>
+  <body>
+    <fieldset>
+      <legend>Choose Your Options (Select 3):</legend>
+      <slice-selector-group required="3">
+        <slice-selector id="option1">Option 1</slice-selector>
+        <slice-selector id="option2">Option 2</slice-selector>
+        <slice-selector id="option3">Option 3</slice-selector>
+        <slice-selector id="option4">Option 4</slice-selector>
+        <slice-selector id="option5">Option 5</slice-selector>
+      </slice-selector-group>
+    </fieldset>
+
+    <script>
+      class SliceSelector extends HTMLElement {
+        constructor() {
+          super();
+          this.innerHTML =
+            `<svg viewBox="-1.1 -1.1 2.2 2.2" shape-rendering="geometricPrecision">
+                <circle cx="0" cy="0" r="0.9" fill="white" stroke="black" stroke-width="0.1"/>
+                <path d="" fill="#0275ff" ></path>
+            </svg>` + this.innerHTML;
+          this._circle = this.querySelector("circle");
+          this._path = this.querySelector("path");
+          this.addEventListener("click", () => {
+            this.toggleAttribute("selected");
+            this.dispatchEvent(
+              new CustomEvent("selection-changed", { bubbles: true })
+            );
+          });
+        }
+
+        updateSlice(percent, allSelected) {
+          // Check if the current slice-selector is selected
+          const isSelected = this.hasAttribute("selected");
+
+          // Determine the path fill color
+          const fillColor = allSelected ? "green" : "#0275ff";
+
+          // If selected, calculate and set the path data and fill color
+          if (isSelected) {
+            const radius = 0.6; // New radius for the path calculation
+            const [startX, startY] = this.getCoordinatesForPercent(0, radius);
+            const [endX, endY] = this.getCoordinatesForPercent(percent, radius);
+            const largeArcFlag = percent > 0.5 ? 1 : 0;
+            const pathData = [
+              `M ${startX} ${startY}`,
+              `A ${radius} ${radius} 0 ${largeArcFlag} 1 ${endX} ${endY}`,
+              `L 0 0`,
+            ].join(" ");
+
+            this._path.setAttribute("d", pathData);
+            this._path.setAttribute("fill", fillColor);
+            this._circle.setAttribute("stroke", fillColor);
+          } else {
+            // If not selected, clear the path data
+            this._path.setAttribute("d", "");
+            this._circle.setAttribute("stroke", "black");
+          }
+        }
+
+        getCoordinatesForPercent(percent, radius = 1) {
+          // Use the provided radius
+          return [
+            radius * Math.cos(2 * Math.PI * percent),
+            radius * Math.sin(2 * Math.PI * percent),
+          ];
+        }
+      }
+
+      class SliceSelectorGroup extends HTMLElement {
+        constructor() {
+          super();
+          this.requiredSelections = parseInt(this.getAttribute("required"), 10);
+        }
+
+        connectedCallback() {
+          this.addEventListener("selection-changed", () => {
+            const selectors = Array.from(
+              this.querySelectorAll("slice-selector")
+            );
+            const selectedCount = selectors.filter((selector) =>
+              selector.hasAttribute("selected")
+            ).length;
+            const percent = selectedCount / this.requiredSelections;
+            const allSelected = selectedCount === this.requiredSelections;
+            selectors.forEach((selector) =>
+              selector.updateSlice(percent, allSelected)
+            );
+          });
+        }
+      }
+
+      customElements.define("slice-selector", SliceSelector);
+      customElements.define("slice-selector-group", SliceSelectorGroup);
+    </script>
+  </body>
+</html>
